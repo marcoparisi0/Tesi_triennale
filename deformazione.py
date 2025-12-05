@@ -1,3 +1,11 @@
+"""
+cose da correggere: trovare il modo per fare l=0
+trovare un modo più compatto di scriverlo (?)
+ fare il plot del lato negativo 
+
+"""
+
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -55,9 +63,9 @@ def defos(om):
     dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
     brapp=bl/dl
 
-    r=np.linspace(1e-6,R,100)
-    theta= np.linspace(0,math.pi, 100)
-    phi=np.linspace(0,2*math.pi,100)
+    r=np.linspace(1e-12,R,100)
+    theta= np.linspace(1e-12,math.pi, 100)
+    phi=np.linspace(1e-12,2*math.pi,100)
     RRR , TETA, PHI = np.meshgrid(r,theta, phi, indexing='ij')
     """
     questo perchè mi servono 3 matrici 3D di ogni coordinata , costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
@@ -153,10 +161,28 @@ if args.sferoidale==True:
     omegas_s=np.sort(hR_roots)*vl/R
     print(omegas_s)
 
-    s_s=defos(omegas_s) #vari vettori spostamento per vari valori di r teta  phi , relativi ad un modo specifico 
+    s_s=defos(omegas_s) #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di deformazione cartesiano su una griglia sferica
+    #è una tupla a 3 elementi, ognuno è un array 3D
 
-    print(s_s) 
 
+    r = np.linspace(1e-12, R, 100)
+    theta = np.linspace(1e-12, math.pi, 100)
+    phi = np.linspace(1e-12, 2 * math.pi, 100)
+    RRR, TETA, PHI = np.meshgrid(r, theta, phi, indexing='ij')  # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r theta e phi !!!!!!!!!!!!11
+    u_xz, v_xz, w_xz = s_s[0][:, :, 0], s_s[1][:, :,0],s_s[2][:, :,0]
+    RR=RRR[:,:,0]
+    TT=TETA[:,:,0]
+    XX=RR*np.sin(TT)
+    ZZ=RR*np.cos(TT)
+
+    fig1, ax1 = plt.subplots()
+    ax1.quiver(XX[::3,::3], ZZ[::3,::3],u_xz[::3,::3]*3e7,w_xz[::3,::3]*3e7, units='width')
+    # imposto  limiti coerenti con il raggio della sfera
+    ax1.set_xlim([-R, R])
+    ax1.set_ylim([-R, R])
+    # Assicura che la scala degli assi sia uguale (cerchio non deformato)
+    ax1.set_aspect('equal', 'box')
+    plt.show()
 #--------------------------------------------------------frequenze modi torsionali------------------------------------------------------------------------
 
 if args.torsionale == True:
