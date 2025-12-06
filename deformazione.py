@@ -2,7 +2,7 @@
 cose da correggere: trovare il modo per fare l=0
 trovare un modo più compatto di scriverlo (?)
  fare il plot del lato negativo 
-
+ricontrollare risultato campo di spostamento 
 """
 
 
@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 import argparse
-from scipy.special import sph_harm as Y  #Y(m[array di interi],l[uguale],theta[array di float,phi[],*, diff_n)
+from scipy.special import sph_harm as Y  #Y(m[array di interi],l[uguale],phi[array di float,theta[],*, diff_n)
 from scipy.special import spherical_jn as Jv  #jv(v[array],z [array anche complesso],derivative=False o True)
 from scipy.optimize import fsolve
 from scipy.optimize import brentq
@@ -23,8 +23,8 @@ Potrei anche fare una "raccolta" di modi
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Campo di deformazion modi di vibrazione di una sfera')
-    parser.add_argument('-s', '--sferoidale',    action='store_true', help="Mostra i modi sferoidali")
-    parser.add_argument('-t', '--torsionale',    action='store_true', help="Mostra i modi torsionali")
+    parser.add_argument('-s', '--sferoidale',action='store_true', help="Mostra i modi sferoidali")
+    parser.add_argument('-t', '--torsionale',action='store_true', help="Mostra i modi torsionali")
 
     return  parser.parse_args()
 
@@ -32,7 +32,7 @@ args = parse_arguments()
 
 
 
-R= 10**(-7) #m  raggio sfera
+R= 10**(-8) #m  raggio sfera
 
 rho= 2330 #kg/m3
 lam= 5*pow(10,10) #Pa
@@ -176,7 +176,7 @@ if args.sferoidale==True:
     ZZ=RR*np.cos(TT)
 
     fig1, ax1 = plt.subplots()
-    ax1.quiver(XX[::3,::3], ZZ[::3,::3],u_xz[::3,::3]*3e7,w_xz[::3,::3]*3e7, units='width')
+    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5]*3e9,w_xz[::5,::5]*3e9, units='width')
     # imposto  limiti coerenti con il raggio della sfera
     ax1.set_xlim([-R, R])
     ax1.set_ylim([-R, R])
