@@ -35,10 +35,10 @@ args = parse_arguments()
 R= 10**(-8) #m  raggio sfera
 
 rho= 2330 #kg/m3
-lam= 5*pow(10,10) #Pa
-mu= 6*pow(10,10) #Pa
+lam= 6*pow(10,10) #Pa
+mu= 8*pow(10,10) #Pa
 l=int(input('inserisci il modo angolare (>= 1) '))
-m=int(input('inserisci la terza componente del modo andolare'))
+m=int(input('inserisci la terza componente del modo angolare'))
 
 
 def psi(l,x):
@@ -64,9 +64,9 @@ def defos(om):
     brapp=bl/dl
 
     r=np.linspace(1e-12,R,100)
-    theta= np.linspace(1e-12,math.pi, 100)
-    phi=np.linspace(1e-12,2*math.pi,100)
-    RRR , TETA, PHI = np.meshgrid(r,theta, phi, indexing='ij')
+    theta= np.linspace(1e-6,math.pi, 100)
+    phi=np.linspace(1e-6,2*math.pi,100)
+    RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij')
     """
     questo perchè mi servono 3 matrici 3D di ogni coordinata , costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
     RRR, TETA, PHI sono tutti i punti del reticolo sferico
@@ -79,7 +79,7 @@ def defos(om):
     dr=r[1]-r[0]
     dtheta = theta[1]-theta[0]
     dphi = phi[1]-phi[0]
-    dY_r, dY_theta, dY_phi = np.gradient(Y_griglia, dr, dtheta, dphi)
+    dY_r, dY_phi,  dY_theta = np.gradient(Y_griglia, dr, dphi , dtheta) #usa la differenza centrale 
     
     dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
     dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
@@ -90,7 +90,7 @@ def defos(om):
    # dzWr=dzW/pow(RRR, 2*l +1) - np.cos(TETA)*(2*l +1)*pow(RRR, -(2*l +2))
 
     
-    
+    #NELL'UNITÀ DI TEMPO
 
     u=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
     v=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
@@ -166,18 +166,17 @@ if args.sferoidale==True:
 
 
     r = np.linspace(1e-12, R, 100)
-    theta = np.linspace(1e-12, math.pi, 100)
-    phi = np.linspace(1e-12, 2 * math.pi, 100)
-    RRR, TETA, PHI = np.meshgrid(r, theta, phi, indexing='ij')  # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r theta e phi !!!!!!!!!!!!11
-    u_xz, v_xz, w_xz = s_s[0][:, :, 0], s_s[1][:, :,0],s_s[2][:, :,0]
-    RR=RRR[:,:,0]
-    TT=TETA[:,:,0]
+    theta = np.linspace(1e-6, math.pi, 100)
+    phi = np.linspace(1e-6, 2 * math.pi, 100)
+    RRR, PHI, TETA = np.meshgrid(r, phi, theta ,indexing='ij')  # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r theta e phi !!!!!!!!!!!!11
+    u_xz, v_xz, w_xz = s_s[0][:, 0, :], s_s[1][:, 0,:],s_s[2][:, 0,:]
+    RR=RRR[:,0,:]
+    TT=TETA[:,0,:]
     XX=RR*np.sin(TT)
     ZZ=RR*np.cos(TT)
 
     fig1, ax1 = plt.subplots()
-    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5]*3e9,w_xz[::5,::5]*3e9, units='width')
-    # imposto  limiti coerenti con il raggio della sfera
+    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5]/np.sqrt(u_xz[::5,::5]**2 + w_xz[::5,::5]**2),w_xz[::5,::5]/np.sqrt(u_xz[::5,::5]**2 + w_xz[::5,::5]**2), units='width')
     ax1.set_xlim([-R, R])
     ax1.set_ylim([-R, R])
     # Assicura che la scala degli assi sia uguale (cerchio non deformato)
