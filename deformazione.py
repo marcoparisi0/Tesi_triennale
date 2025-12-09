@@ -1,8 +1,8 @@
 """
-cose da correggere: trovare il modo per fare l=0
-trovare un modo più compatto di scriverlo (?)
- fare il plot del lato negativo 
-ricontrollare risultato campo di spostamento 
+trovare un modo più compatto di scriverlo (?) 
+ricontrollare risultato campo di spostamento
+normalizzare s?
+
 """
 
 
@@ -34,10 +34,10 @@ args = parse_arguments()
 
 R= 10**(-8) #m  raggio sfera
 
-rho= 2330 #kg/m3
-lam= 6*pow(10,10) #Pa
-mu= 8*pow(10,10) #Pa
-l=int(input('inserisci il modo angolare (>= 1) '))
+rho= 2.5*pow(10,3) #kg/m3
+lam= 3.4*pow(10,10) #Pa
+mu= 3.1*pow(10,10) #Pa
+l=int(input('inserisci il modo angolare '))
 m=int(input('inserisci la terza componente del modo angolare'))
 
 
@@ -59,9 +59,6 @@ def defos(om):
     k=freq/vt
     hR=h*R
     kR=k*R
-    bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
-    dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
-    brapp=bl/dl
 
     r=np.linspace(1e-12,R,100)
     theta= np.linspace(1e-6,math.pi, 100)
@@ -71,45 +68,41 @@ def defos(om):
     questo perchè mi servono 3 matrici 3D di ogni coordinata , costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
     RRR, TETA, PHI sono tutti i punti del reticolo sferico
     """
-
-    Y_griglia = Y(m, l, PHI, TETA)
-    W= pow(RRR,l)*Y_griglia #armoniche solide
-    P=brapp*W
     
-    dr=r[1]-r[0]
-    dtheta = theta[1]-theta[0]
-    dphi = phi[1]-phi[0]
-    dY_r, dY_phi,  dY_theta = np.gradient(Y_griglia, dr, dphi , dtheta) #usa la differenza centrale 
-    
-    dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
-    dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
-    dzW=pow(RRR,l-1)*(np.cos(TETA)*l*Y_griglia - np.sin(TETA)*dY_theta)
+    if l==0 :
+        u=-np.sin(TETA)*np.cos(PHI)*de_psi(l,h*RRR)/(h**2)
+        v=-np.sin(TETA)*np.sin(PHI)*de_psi(l,h*RRR)/(h**2)
+        w=-np.cos(TETA)*de_psi(l,h*RRR)/(h**2)
 
-   # dxWr= dxW/pow(RRR,2*l+1) - W*np.sin(TETA)*np.cos(PHI)*pow(RRR, -2*l - 2)*(2+l +1)
-   # dyWr= dyW/pow(RRR, 2*l + 1) - W*np.sin(TETA)*np.sin(PHI)*(2*l +1) * pow(RRR, -(2*l +2))
-   # dzWr=dzW/pow(RRR, 2*l +1) - np.cos(TETA)*(2*l +1)*pow(RRR, -(2*l +2))
-
-    
-    #NELL'UNITÀ DI TEMPO
-
-    u=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
-    v=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
-    w=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
-
+    else:
+        bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
+        dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
+        brapp=bl/dl
+        Y_griglia = Y(m, l, PHI, TETA)
+        W= pow(RRR,l)*Y_griglia #armoniche solide
+        P=brapp*W
+        
+        dr=r[1]-r[0]
+        dtheta = theta[1]-theta[0]
+        dphi = phi[1]-phi[0]
+        dY_r, dY_phi,  dY_theta = np.gradient(Y_griglia, dr, dphi , dtheta) #usa la differenza centrale 
+        
+        dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
+        dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
+        dzW=pow(RRR,l-1)*(np.cos(TETA)*l*Y_griglia - np.sin(TETA)*dY_theta)
+        
+        # dxWr= dxW/pow(RRR,2*l+1) - W*np.sin(TETA)*np.cos(PHI)*pow(RRR, -2*l - 2)*(2+l +1)
+        # dyWr= dyW/pow(RRR, 2*l + 1) - W*np.sin(TETA)*np.sin(PHI)*(2*l +1) * pow(RRR, -(2*l +2))
+        # dzWr=dzW/pow(RRR, 2*l +1) - np.cos(TETA)*(2*l +1)*pow(RRR, -(2*l +2))
+        
+        
+        #NELL'UNITÀ DI TEMPO
+        
+        u=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
+        v=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
+        w=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
+        
     return np.real(u) ,np.real(v) ,np.real(w)
-
-"""
-da fare
-(devo capire cosa sono le chi)
-
-def defot(om):
-    n=int(input('inserisci il modo radiale '))-1
-    freq=om[n]
-    h=freq/vl
-    k=freq/vt
-    hR=h*R
-    kR=k*R
-"""
 
 
 
@@ -123,22 +116,26 @@ if args.sferoidale==True:
         
         in questo modo la mia variabile non è un qualcosa di troppo piccolo (non sono due variabili perchè hR a posso scrivere in funzione di kR
         """
-        
         kR=hR/rap
         h=hR/R
         k=kR/R
-        al=((k**2)*(R**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*(h**2)) #okay
-        bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
-        cl=psi(l,kR)*(kR)**2 + (2*l - 2)*psi(l-1, kR)
-        dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
-        """
-        ho riscritto k e h e le ho  lasciate  perchè avevo già scritto le a b c d  con questio valori isolati e non ho voglia di riscriverle
-        """
         
-        return al*dl - bl*cl
+        if l==0:
+            return psi(l,hR)+(4*hR*de_psi(l,hR)/(kR)**2)
+        else:
+            
+            al=((k**2)*(R**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*(h**2)) #okay
+            bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
+            cl=psi(l,kR)*(kR)**2 + (2*l - 2)*psi(l-1, kR)
+            dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
+            """
+            ho riscritto k e h e le ho  lasciate  perchè avevo già scritto le a b c d  con questio valori isolati e non ho voglia di riscriverle
+            """
+            
+            return al*dl - bl*cl
     
     
-    #L’indice n è il modo radiale, cioè quante volte il campo radiale si annulla dentro la sfera; si ottiene dall’ordine delle radici dell’equazione.
+    #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
     
     
     hrs = np.linspace(1e-6,30, 5000)   
@@ -176,12 +173,19 @@ if args.sferoidale==True:
     ZZ=RR*np.cos(TT)
 
     fig1, ax1 = plt.subplots()
-    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5]/np.sqrt(u_xz[::5,::5]**2 + w_xz[::5,::5]**2),w_xz[::5,::5]/np.sqrt(u_xz[::5,::5]**2 + w_xz[::5,::5]**2), units='width')
+    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5],w_xz[::5,::5])
     ax1.set_xlim([-R, R])
     ax1.set_ylim([-R, R])
     # Assicura che la scala degli assi sia uguale (cerchio non deformato)
     ax1.set_aspect('equal', 'box')
     plt.show()
+
+
+
+
+
+
+    
 #--------------------------------------------------------frequenze modi torsionali------------------------------------------------------------------------
 
 if args.torsionale == True:
