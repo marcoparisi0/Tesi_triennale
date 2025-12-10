@@ -1,24 +1,17 @@
-"""
-trovare un modo più compatto di scriverlo (?) 
-ricontrollare risultato campo di spostamento
-normalizzare s?
-
-"""
-
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
 import argparse
+import scipy.integrate as integrate
 from scipy.special import sph_harm as Y  #Y(m[array di interi],l[uguale],phi[array di float,theta[],*, diff_n)
 from scipy.special import spherical_jn as Jv  #jv(v[array],z [array anche complesso],derivative=False o True)
 from scipy.optimize import fsolve
 from scipy.optimize import brentq
 
+
 """
-Il  codice è scritto in modo da selezionare il modo che si vuole visualizzare
-Potrei anche fare una "raccolta" di modi
+Il  codice è scritto in modo da selezionare il modo che si vuole visualizzare. Potrei anche fare una "raccolta" di modi
 """
 
 def parse_arguments():
@@ -32,24 +25,26 @@ args = parse_arguments()
 
 
 
-R= 10**(-8) #m  raggio sfera
 
+
+
+R= 10**(-8) #m  raggio sfera
 rho= 2.5*pow(10,3) #kg/m3
 lam= 3.4*pow(10,10) #Pa
 mu= 3.1*pow(10,10) #Pa
+vl=np.sqrt((lam+ 2*mu)/rho)
+vt=np.sqrt(mu/rho)
+rap= vt/vl
+
 l=int(input('inserisci il modo angolare '))
 m=int(input('inserisci la terza componente del modo angolare'))
-
+    
 
 def psi(l,x):
     return ((-1)**l)*pow(x,-l)*Jv(l,x)
    
 def de_psi(l,x):
     return ((-1)**l)*pow(x,-l)*(Jv(l,x,True)-(Jv(l,x)*l/x))
-    
-vl=np.sqrt((lam+ 2*mu)/rho)
-vt=np.sqrt(mu/rho)
-rap= vt/vl
 
 def defos(om):
     
@@ -101,8 +96,18 @@ def defos(om):
         u=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
         v=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
         w=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
-        
-    return np.real(u) ,np.real(v) ,np.real(w)
+
+    uu=np.real(u)
+    vv=np.real(v)
+    ww=np.real(w)
+
+    inte_r=integrate.simpson(r*r*(u**2 + v**2 + w**2),r)
+    inte_te=integrate.simpson(inte_r*np.sin(theta),theta)
+    inte_fi=integrate.simpson(inte_te,phi)
+
+    A=np.sqrt(1/(rho*inte_fi))
+    
+    return A*uu , A*vv, A*ww
 
 
 
@@ -176,8 +181,6 @@ if args.sferoidale==True:
     ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5],w_xz[::5,::5])
     ax1.set_xlim([-R, R])
     ax1.set_ylim([-R, R])
-    # Assicura che la scala degli assi sia uguale (cerchio non deformato)
-    ax1.set_aspect('equal', 'box')
     plt.show()
 
 
