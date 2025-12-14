@@ -56,8 +56,8 @@ def defos(om):
     kR=k*R
 
     r=np.linspace(1e-12,R,100)
-    theta= np.linspace(1e-6,math.pi, 100)
-    phi=np.linspace(1e-6,2*math.pi,100)
+    theta= np.linspace(1e-8,math.pi, 100)
+    phi=np.linspace(1e-8,2*math.pi,100)
     RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij')
     """
     questo perchè mi servono 3 matrici 3D di ogni coordinata , costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
@@ -101,7 +101,7 @@ def defos(om):
     vv=np.real(v)
     ww=np.real(w)
 
-    inte_r=integrate.simpson(r*r*(u**2 + v**2 + w**2),r)
+    inte_r=integrate.simpson(r*r*(uu**2 + vv**2 + ww**2),r)
     inte_te=integrate.simpson(inte_r*np.sin(theta),theta)
     inte_fi=integrate.simpson(inte_te,phi)
 
@@ -168,8 +168,8 @@ if args.sferoidale==True:
 
 
     r = np.linspace(1e-12, R, 100)
-    theta = np.linspace(1e-6, math.pi, 100)
-    phi = np.linspace(1e-6, 2 * math.pi, 100)
+    theta = np.linspace(1e-12, math.pi, 100)
+    phi = np.linspace(1e-12, 2 * math.pi, 100)
     RRR, PHI, TETA = np.meshgrid(r, phi, theta ,indexing='ij')  # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r theta e phi !!!!!!!!!!!!11
     u_xz, v_xz, w_xz = s_s[0][:, 0, :], s_s[1][:, 0,:],s_s[2][:, 0,:]
     RR=RRR[:,0,:]
@@ -177,10 +177,12 @@ if args.sferoidale==True:
     XX=RR*np.sin(TT)
     ZZ=RR*np.cos(TT)
 
+    C=np.sqrt(u_xz[::5,::5]**2 + w_xz[::5,::5]**2)
     fig1, ax1 = plt.subplots()
-    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5],w_xz[::5,::5])
+    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5],w_xz[::5,::5], C, cmap="winter",  headwidth = 2)
     ax1.set_xlim([-R, R])
     ax1.set_ylim([-R, R])
+    ax1.set_aspect('equal', 'box')
     plt.show()
 
 
