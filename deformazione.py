@@ -25,9 +25,6 @@ args = parse_arguments()
 
 
 
-
-
-
 R= 10**(-8) #m  raggio sfera
 rho= 2.5*pow(10,3) #kg/m3
 lam= 3.4*pow(10,10) #Pa
@@ -48,7 +45,7 @@ def de_psi(l,x):
 
 def defos(om):
     
-    n=int(input('inserisci il modo radiale '))-1
+    n=int(input('inserisci il modo radiale '))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
     freq=om[n]
     h=freq/vl
     k=freq/vt
@@ -60,7 +57,7 @@ def defos(om):
     phi=np.linspace(1e-8,2*math.pi,100)
     RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij')
     """
-    questo perchè mi servono 3 matrici 3D di ogni coordinata , costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
+    questo perchè mi servono 3 matrici 3D di ogni coordinata, meshgrid costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
     RRR, TETA, PHI sono tutti i punti del reticolo sferico
     """
     
@@ -85,11 +82,6 @@ def defos(om):
         dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
         dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
         dzW=pow(RRR,l-1)*(np.cos(TETA)*l*Y_griglia - np.sin(TETA)*dY_theta)
-        
-        # dxWr= dxW/pow(RRR,2*l+1) - W*np.sin(TETA)*np.cos(PHI)*pow(RRR, -2*l - 2)*(2+l +1)
-        # dyWr= dyW/pow(RRR, 2*l + 1) - W*np.sin(TETA)*np.sin(PHI)*(2*l +1) * pow(RRR, -(2*l +2))
-        # dzWr=dzW/pow(RRR, 2*l +1) - np.cos(TETA)*(2*l +1)*pow(RRR, -(2*l +2))
-        
         
         #NELL'UNITÀ DI TEMPO
         
@@ -140,9 +132,6 @@ if args.sferoidale==True:
             return al*dl - bl*cl
     
     
-    #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
-    
-    
     hrs = np.linspace(1e-6,30, 5000)   
     fvals = np.array([f(w) for w in hrs])
     """
@@ -163,14 +152,15 @@ if args.sferoidale==True:
     omegas_s=np.sort(hR_roots)*vl/R
     print(omegas_s)
 
-    s_s=defos(omegas_s) #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di deformazione cartesiano su una griglia sferica
+    s_s=defos(omegas_s)
+    #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
     #è una tupla a 3 elementi, ognuno è un array 3D
 
 
     r = np.linspace(1e-12, R, 100)
     theta = np.linspace(1e-12, math.pi, 100)
     phi = np.linspace(1e-12, 2 * math.pi, 100)
-    RRR, PHI, TETA = np.meshgrid(r, phi, theta ,indexing='ij')  # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r theta e phi !!!!!!!!!!!!11
+    RRR, PHI, TETA = np.meshgrid(r, phi, theta ,indexing='ij')  # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r phi e theta 
     u_xz, v_xz, w_xz = s_s[0][:, 0, :], s_s[1][:, 0,:],s_s[2][:, 0,:]
     RR=RRR[:,0,:]
     TT=TETA[:,0,:]
