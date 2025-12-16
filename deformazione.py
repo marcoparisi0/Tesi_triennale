@@ -27,7 +27,7 @@ args = parse_arguments()
 
 
 
-R= 2*(10**(-9)) #m  raggio sfera
+R= 2*(10**(-7)) #m  raggio sfera
 rho= 2.5*pow(10,3) #kg/m3
 lam= 3.4*pow(10,10) #Pa
 mu= 3.1*pow(10,10) #Pa
@@ -92,22 +92,18 @@ for i in range(1, len(fvals)):
 omegas_s=np.sort(hR_roots)*vl/R
 print(omegas_s)
 
-if args.singolo_m == True:
-    m=int(input('inserisci la terza componente del modo angolare'))
 
-if args.tutti_m ==True:
-    mvals=np.arange(-l,l+1)
-
-n=int(input('inserisci il modo radiale '))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
+n=int(input('inserisci il modo radiale'))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
 freq=omegas_s[n]
 h=freq/vl
 k=freq/vt
 hR=h*R
 kR=k*R
 
-r=np.linspace(1e-12,R,100)
-theta= np.linspace(1e-8,math.pi, 100)
-phi=np.linspace(1e-8,2*math.pi,100)
+EPSILON = 1e-12
+r=np.linspace(EPSILON,R,100)
+theta=np.linspace(EPSILON,math.pi-EPSILON, 100)
+phi=np.linspace(0,2*math.pi,100)
 RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij') # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r phi e theta 
 """
 questo perchè mi servono 3 matrici 3D di ogni coordinata, meshgrid costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
@@ -145,11 +141,11 @@ def sss(m):
         v=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
         w=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
         
-    uu=abs(u)
-    vv=abs(v)
-    ww=abs(w)
+    uu=np.real(u)
+    vv=np.real(v)
+    ww=np.real(w)
     
-    inte_r=integrate.simpson(r*r*(uu**2 + vv**2 +ww**2),r)
+    inte_r=integrate.simpson(r*r*(abs(u)**2 + abs(v)**2 + abs(w)**2),r)
     inte_te=integrate.simpson(inte_r*np.sin(theta),theta)
     inte_fi=integrate.simpson(inte_te,phi)
     
@@ -161,8 +157,9 @@ def sss(m):
 #è una tupla a 3 elementi, ognuno è un array 3D
 
 if args.singolo_m == True:
+    m=int(input('inserisci la terza componente del modo angolare'))
     s_s=sss(m)
-    u_xz, v_xz, w_xz = s_s[0][:, 0, :], s_s[1][:, 0,:],s_s[2][:, 0,:]
+    u_xz, v_xz, w_xz = s_s[0][:, 0,:], s_s[1][:, 0,:],s_s[2][:, 0,:]
     RR=RRR[:,0,:]
     TT=TETA[:,0,:]
     XX=RR*np.sin(TT)
@@ -178,17 +175,23 @@ if args.singolo_m == True:
 
     
 if args.tutti_m == True:
+    
+    mvals=np.arange(-l,l+1)
     Cps=np.zeros(100)
     qqs=np.linspace(0,37*10**7,100)
     for m in mvals:
         s_s=sss(m)
         def Cp(q):
-            I_r=integrate.simpson(np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2],r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
-            I_te=integrate.simpson(I_r*np.sin(TETA),theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
-            I_fi=integrate.simpson(I_te,phi,axis=0)
-            return q*q*pow(abs(I_fi),2)
+            comp=np.zeros(100)
+            for j in range(3):
+                I_r=integrate.simpson(np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[j],r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
+                I_te=integrate.simpson(I_r*np.sin(TETA),theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
+                I_fi=integrate.simpson(I_te,phi,axis=0)
+                Cj= pow(abs(I_fi),2)
+                comp=comp+Cj
+            return comp
         Cps=Cps+Cp(qqs)
-    In=Cps/(freq**2)
+    In=Cps*qqs*qqs/(freq**2)
     plt.plot(qqs*R,In)
     plt.show()
     
