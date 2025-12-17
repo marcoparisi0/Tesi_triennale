@@ -18,8 +18,8 @@ L'unico aggiustamento da fare magari può essere di sviluppare analiticamente al
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Campo di deformazion modi di vibrazione di una sfera')
-    parser.add_argument('-s', '--singolo_m',action='store_true', help="Mostra i modi sferoidali")
-    parser.add_argument('-t', '--tutti_m',action='store_true', help="Mostra i modi torsionali")
+    parser.add_argument('-s', '--spostamento',action='store_true', help="Mostra i modi sferoidali")
+    parser.add_argument('-i', '--intensità',action='store_true', help="Mostra i modi torsionali")
 
     return  parser.parse_args()
 
@@ -159,7 +159,7 @@ def sss(m):
 #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
 #è una tupla a 3 elementi, ognuno è un array 3D
 
-if args.singolo_m == True:
+if args.spostamento == True:
     m=int(input('inserisci la terza componente del modo angolare'))
     s_s=sss(m)
     u_xz, v_xz, w_xz = s_s[0][:, 0,:], s_s[1][:, 0,:],s_s[2][:, 0,:]
@@ -177,23 +177,18 @@ if args.singolo_m == True:
     plt.show()
 
     
-if args.tutti_m == True:
-    
-    mvals=np.arange(-l,l+1)
+if args.intensità == True:
+    m=0
     Cps=np.zeros(100)
     qqs=np.linspace(0,37*10**7,100)
-    for m in mvals:
-        s_s=sss(m)
-        def Cp(q):
-            comp=np.zeros(100)
-            for j in range(3):
-                I_r=integrate.simpson(np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[j],r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
-                I_te=integrate.simpson(I_r*np.sin(TETA),theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
-                I_fi=integrate.simpson(I_te,phi,axis=0)
-                Cj= pow(abs(I_fi),2)
-                comp=comp+Cj
-            return comp
-        Cps=Cps+Cp(qqs)
+    s_s=sss(m)
+    def Cp(q):
+        I_r=integrate.simpson(np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2],r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
+        I_te=integrate.simpson(I_r*np.sin(TETA),theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
+        I_fi=integrate.simpson(I_te,phi,axis=0)
+        return pow(abs(I_fi),2)
+
+    Cps=Cp(qqs)
     In=Cps*qqs*qqs/(freq**2)
     plt.plot(qqs*R,In)
     plt.show()
@@ -203,7 +198,7 @@ if args.tutti_m == True:
 
 
 
-### troppo tempo di calcolo e risultati errati 
+### troppo tempo di calcolo e risultati errati ---> prof ha detto di togliere la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
 
 
 
