@@ -29,7 +29,7 @@ args = parse_arguments()
 
 R= 2*(10**(-7)) #m  raggio sfera
 rho= 2.5*pow(10,3) #kg/m3
-lam= 3.4*pow(10,10) #Pa
+lam= 15*pow(10,9) #Pa
 mu= 3.1*pow(10,10) #Pa
 vl=np.sqrt((lam+ 2*mu)/rho)
 vt=np.sqrt(mu/rho)
@@ -100,9 +100,9 @@ k=freq/vt
 hR=h*R
 kR=k*R
 
-EPSILON = 1e-12
-r=np.linspace(EPSILON,R,100)
-theta=np.linspace(EPSILON,math.pi-EPSILON, 100)
+eps = 1e-12
+r=np.linspace(eps,R,100)
+theta=np.linspace(eps,math.pi-eps, 100)
 phi=np.linspace(0,2*math.pi,100)
 RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij') # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r phi e theta 
 """
@@ -129,7 +129,10 @@ def sss(m):
         dr=r[1]-r[0]
         dtheta = theta[1]-theta[0]
         dphi = phi[1]-phi[0]
-        dY_r, dY_phi,  dY_theta = np.gradient(Y_griglia, dr, dphi , dtheta) #usa la differenza centrale 
+        dY_r = np.gradient(Y_griglia, dr, axis=0)
+        dY_phi = np.gradient(Y_griglia, dphi, axis=1)
+        dY_theta = np.gradient(Y_griglia, dtheta, axis=2)
+        #usa la differenza centrale
         
         dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
         dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
@@ -145,11 +148,11 @@ def sss(m):
     vv=np.real(v)
     ww=np.real(w)
     
-    inte_r=integrate.simpson(r*r*(abs(u)**2 + abs(v)**2 + abs(w)**2),r)
-    inte_te=integrate.simpson(inte_r*np.sin(theta),theta)
+    inte_r=integrate.simpson(RRR*RRR*(abs(u)**2 + abs(v)**2 + abs(w)**2),r,axis=0)
+    inte_te=integrate.simpson(inte_r*np.sin(TETA),theta,axis=1)
     inte_fi=integrate.simpson(inte_te,phi)
     
-    A=np.sqrt(1/(rho*inte_fi))
+    A=np.sqrt(1/(inte_fi))
     
     return (A*uu , A*vv, A*ww)
 
