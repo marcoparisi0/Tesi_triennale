@@ -8,6 +8,7 @@ from scipy.special import sph_harm as Y  #Y(m[array di interi],l[uguale],phi[arr
 from scipy.special import spherical_jn as Jv  #jv(v[array],z [array anche complesso],derivative=False o True)
 from scipy.optimize import fsolve
 from scipy.optimize import brentq
+from matplotlib.animation import FuncAnimation
 
 
 """
@@ -18,8 +19,9 @@ L'unico aggiustamento da fare magari può essere di sviluppare analiticamente al
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Campo di deformazion modi di vibrazione di una sfera')
-    parser.add_argument('-s', '--spostamento',action='store_true', help="Mostra i modi sferoidali")
-    parser.add_argument('-i', '--intensità',action='store_true', help="Mostra i modi torsionali")
+    parser.add_argument('-s', '--spostamento',action='store_true', help="Mostra il grafico del campo di spostamento")
+    parser.add_argument('-a', '--animazione',action='store_true', help="Mostra il campo di spostamento in evoluzione temporale")
+    parser.add_argument('-i', '--intensità',action='store_true', help="Mostra l'intensità Brillouin per modi con m=0")
 
     return  parser.parse_args()
 
@@ -140,9 +142,9 @@ def sss(m):
         
         #NELL'UNITÀ DI TEMPO
         
-        u=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
-        v=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
-        w=np.cos(freq)*(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
+        u=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
+        v=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
+        w=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
         
     uu=np.real(u)
     vv=np.real(v)
@@ -159,7 +161,7 @@ def sss(m):
 #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
 #è una tupla a 3 elementi, ognuno è un array 3D
 
-if args.spostamento == True:
+if args.spostamento == True or args.animazione== True:
     m=int(input('inserisci la terza componente del modo angolare'))
     s_s=sss(m)
     u_xz, v_xz, w_xz = s_s[0][:, 0,:], s_s[1][:, 0,:],s_s[2][:, 0,:]
@@ -168,12 +170,31 @@ if args.spostamento == True:
     XX=RR*np.sin(TT)
     ZZ=RR*np.cos(TT)
     
-    norm=np.sqrt(u_xz[::5,::5]**2 + w_xz[::5,::5]**2)
-    fig1, ax1 = plt.subplots()
-    ax1.quiver(XX[::5,::5], ZZ[::5,::5],u_xz[::5,::5],w_xz[::5,::5], norm, cmap="tab20b",  headwidth = 2)
-    ax1.set_xlim([-R, R])
-    ax1.set_ylim([-R, R])
-    ax1.set_aspect('equal', 'box')
+    step=10
+    ur_xz,wr_xz=u_xz[::step,::step],w_xz[::step,::step]
+    XXr,ZZr= XX[::step,::step], ZZ[::step,::step]
+    norm=np.sqrt(ur_xz**2 + wr_xz**2)
+    
+    fig, ax = plt.subplots()
+    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="tab20b",  headwidth = 2)
+    ax.set_xlim([-R, R])
+    ax.set_ylim([-R, R])
+    ax.set_aspect('equal', 'box')
+    
+if args.spostamento== True:
+    plt.show()
+    
+if args.animazione==True:
+    def func(frame):
+        dt = 0.1 / freq
+        t = frame * dt
+        #ggestisco questo parametro per avere un'oscillazione più lenta  (x avere visione qualitativa pulita) (dato che la freq è molto elecata
+        c=np.cos(freq*t)
+        Q.set_UVC(c*ur_xz, c*wr_xz)
+        return Q
+    
+    anim=FuncAnimation(fig,func,repeat=True,frames=200, interval=30)  #interval mi dice il tempo tra un frame e l'altro 
+   
     plt.show()
 
     
@@ -198,7 +219,7 @@ if args.intensità == True:
 
 
 
-### troppo tempo di calcolo e risultati errati ---> prof ha detto di togliere la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
+#prof ha detto di togliere la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
 
 
 
