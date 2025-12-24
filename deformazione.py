@@ -29,7 +29,7 @@ args = parse_arguments()
 
 
 
-R= 2*(10**(-7)) #m  raggio sfera
+R= 2.5*(10**(-7)) #m  raggio sfera
 rho= 2.5*pow(10,3) #kg/m3
 lam= 15*pow(10,9) #Pa
 mu= 3.1*pow(10,10) #Pa
@@ -140,7 +140,7 @@ def sss(m):
         dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
         dzW=pow(RRR,l-1)*(np.cos(TETA)*l*Y_griglia - np.sin(TETA)*dY_theta)
         
-        #NELL'UNITÀ DI TEMPO
+        #in questo momento sto prendendo il massimo delle componenti, dato che c'è un coseno a moltiplicare
         
         u=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dxW)/(h**2) + de_psi(l,h*RRR)*(RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dxW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dxW - W*np.sin(TETA)*np.cos(PHI)*(2*l + 1)*RRR)/(l+1))
         v=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
@@ -149,9 +149,10 @@ def sss(m):
     uu=np.real(u)
     vv=np.real(v)
     ww=np.real(w)
-    
-    inte_r=integrate.simpson(RRR*RRR*(abs(u)**2 + abs(v)**2 + abs(w)**2),r,axis=0)
-    inte_te=integrate.simpson(inte_r*np.sin(TETA),theta,axis=1)
+
+
+    inte_r=integrate.simpson(RRR*RRR*np.sin(TETA)*(abs(u)**2 + abs(v)**2 + abs(w)**2),r,axis=0)
+    inte_te=integrate.simpson(inte_r,theta,axis=1)
     inte_fi=integrate.simpson(inte_te,phi)
     
     A=np.sqrt(1/(inte_fi))
@@ -200,16 +201,17 @@ if args.animazione==True:
     
 if args.intensità == True:
     m=0
-    Cps=np.zeros(100)
-    qqs=np.linspace(0,37*10**7,100)
+    Cps=np.empty(0)
+    qqs=np.linspace(0,33*10**6,100)
     s_s=sss(m)
     def Cp(q):
-        I_r=integrate.simpson(np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2],r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
-        I_te=integrate.simpson(I_r*np.sin(TETA),theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
+        igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
+        I_r=integrate.simpson(igr,r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
+        I_te=integrate.simpson(I_r,theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
         I_fi=integrate.simpson(I_te,phi,axis=0)
         return pow(abs(I_fi),2)
-
-    Cps=Cp(qqs)
+    for i in qqs:
+        Cps=np.append(Cps,Cp(i))
     In=Cps*qqs*qqs/(freq**2)
     plt.plot(qqs*R,In)
     plt.show()
