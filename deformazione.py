@@ -103,9 +103,9 @@ hR=h*R
 kR=k*R
 
 eps = 1e-12
-r=np.linspace(eps,R,100)
-theta=np.linspace(eps,math.pi-eps, 100)
-phi=np.linspace(0,2*math.pi,100)
+r=np.linspace(eps,R,101)  #101 perchè in questo modo ho che il punto medio  è 50 (mi serve per il grafico)
+theta=np.linspace(eps,math.pi-eps, 101)
+phi=np.linspace(0,2*math.pi,101)
 RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij') # !!! LE TRE DIMENSIONI DI OGNUNO, SONO r phi e theta 
 """
 questo perchè mi servono 3 matrici 3D di ogni coordinata, meshgrid costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
@@ -166,18 +166,22 @@ if args.spostamento == True or args.animazione== True:
     m=int(input('inserisci la terza componente del modo angolare'))
     s_s=sss(m)
     u_xz, v_xz, w_xz = s_s[0][:, 0,:], s_s[1][:, 0,:],s_s[2][:, 0,:]
-    RR=RRR[:,0,:]
-    TT=TETA[:,0,:]
+    um_xz, vm_xz, wm_xz = s_s[0][:, 50,:], s_s[1][:,50,:],s_s[2][:, 50,:]
+    RR,RRm=RRR[:,0,:],RRR[:,50,:]
+    TT,TTm=TETA[:,0,:],TETA[:,50,:]
     XX=RR*np.sin(TT)
     ZZ=RR*np.cos(TT)
     
-    step=10
-    ur_xz,wr_xz=u_xz[::step,::step],w_xz[::step,::step]
+    step=7
+    ur_xz,wr_xz, urm_xz,wrm_xz=u_xz[::step,::step],w_xz[::step,::step], um_xz[::step,::step],wm_xz[::step,::step]
     XXr,ZZr= XX[::step,::step], ZZ[::step,::step]
     norm=np.sqrt(ur_xz**2 + wr_xz**2)
     
     fig, ax = plt.subplots()
-    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="tab20b",  headwidth = 2)
+    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="tab20",pivot="tail")
+    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="tab20", pivot="tail")
+    ax.scatter(XXr, ZZr, color='blueviolet', s=2,alpha=0.7)
+    ax.scatter(-XXr, ZZr, color='blueviolet', s=2, alpha=0.7)
     ax.set_xlim([-R, R])
     ax.set_ylim([-R, R])
     ax.set_aspect('equal', 'box')
@@ -192,6 +196,7 @@ if args.animazione==True:
         #ggestisco questo parametro per avere un'oscillazione più lenta  (x avere visione qualitativa pulita) (dato che la freq è molto elecata
         c=np.cos(freq*t)
         Q.set_UVC(c*ur_xz, c*wr_xz)
+        Qm.set_UVC(c*urm_xz, c*wrm_xz)
         return Q
     
     anim=FuncAnimation(fig,func,repeat=True,frames=200, interval=30)  #interval mi dice il tempo tra un frame e l'altro 
@@ -202,7 +207,7 @@ if args.animazione==True:
 if args.intensità == True:
     m=0
     Cps=np.empty(0)
-    qqs=np.linspace(0,33*10**6,100)
+    qqs=np.linspace(0,5*10**7,100)
     s_s=sss(m)
     def Cp(q):
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
@@ -213,7 +218,7 @@ if args.intensità == True:
     for i in qqs:
         Cps=np.append(Cps,Cp(i))
     In=Cps*qqs*qqs/(freq**2)
-    plt.plot(qqs*R,In)
+    plt.plot(qqs*R,In, color="navy")
     plt.show()
     
 
