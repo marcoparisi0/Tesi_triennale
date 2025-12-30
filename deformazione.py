@@ -102,7 +102,7 @@ k=freq/vt
 hR=h*R
 kR=k*R
 
-eps = 1e-12
+eps = 1e-8
 r=np.linspace(eps,R,101)  #101 perchè in questo modo ho che il punto medio  è 50 (mi serve per il grafico)
 theta=np.linspace(eps,math.pi-eps, 101)
 phi=np.linspace(0,2*math.pi,101)
@@ -155,9 +155,9 @@ def sss(m):
     inte_te=integrate.simpson(inte_r,theta,axis=1)
     inte_fi=integrate.simpson(inte_te,phi)
     
-    A=np.sqrt(1/(inte_fi))
+    A=np.sqrt(inte_fi)
     
-    return (A*uu , A*vv, A*ww)
+    return (uu/A , vv/A, ww/A)
 
 #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
 #è una tupla a 3 elementi, ognuno è un array 3D
@@ -210,19 +210,26 @@ if args.intensità == True:
     qqs=np.linspace(0,5*10**7,100)
     s_s=sss(m)
     def Cp(q):
+        
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
         I_r=integrate.simpson(igr,r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
         I_te=integrate.simpson(I_r,theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
         I_fi=integrate.simpson(I_te,phi,axis=0)
+        
         return pow(abs(I_fi),2)
+        """
+        U_l0 = integrate.simpson(integrate.simpson(s_s[2]*np.conj(Y(m,l,PHI,TETA))*np.sin(TETA),theta, axis=2),phi, axis=1)
+        integranda=(r**2)*Jv(l,q*r)*U_l0 #lasciando l'esponenziale complesso avrei avuto moltissime oscillazioni--> difficile da calcolare
+        ingr= integrate.simpson(integranda, r)
+        return 4*math.pi*(2*l +1)*abs(ingr*q)**2
+        """
     for i in qqs:
         Cps=np.append(Cps,Cp(i))
-    In=Cps*qqs*qqs/(freq**2)
-    plt.plot(qqs*R,In, color="navy")
+    In=Cps/(freq**2)
+    plt.plot(qqs*R,In*1e40, color="navy")
     plt.show()
-    
 
-
+    #------------< buono per i primi 4 l,oltre l=5 compreso schizza. Non capisco se per l=1 va bene
 
 
 
