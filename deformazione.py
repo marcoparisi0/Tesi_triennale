@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import math
 import argparse
 import scipy.integrate as integrate
+from scipy.constants import hbar
 from scipy.special import sph_harm as Y  #Y(m[array di interi],l[uguale],phi[array di float,theta[],*, diff_n)
 from scipy.special import spherical_jn as Jv  #jv(v[array],z [array anche complesso],derivative=False o True)
 from scipy.optimize import fsolve
@@ -29,7 +30,7 @@ args = parse_arguments()
 
 
 
-R= 2.5*(10**(-7)) #m  raggio sfera
+R= 5*(10**(-7)) #m  raggio sfera
 rho= 2.5*pow(10,3) #kg/m3
 lam= 15*pow(10,9) #Pa
 mu= 3.1*pow(10,10) #Pa
@@ -59,9 +60,12 @@ def f(hR):
     kR=hR/rap
     h=hR/R
     k=kR/R
+    #tutto in funz di hR
 
     if l==0:
         return psi(l,hR)+(4*hR*de_psi(l,hR)/(kR)**2)
+    #elif l==1:
+        #return kR*psi(l,kR)+2*de_psi(l,kR)
     else:
         
         al=((k**2)*(R**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*(h**2)) #okay
@@ -76,11 +80,13 @@ def f(hR):
     
 hrs = np.linspace(1e-6,30, 5000)   
 fvals = np.array([f(w) for w in hrs])
+
 """
 plt.plot(hrs,fvals)
 plt.grid(True)
 plt.show()
 """
+
 hR_roots= np.empty(0)
 
 for i in range(1, len(fvals)):
@@ -102,7 +108,7 @@ k=freq/vt
 hR=h*R
 kR=k*R
 
-eps = 1e-8
+eps = 1e-12
 r=np.linspace(eps,R,101)  #101 perchè in questo modo ho che il punto medio  è 50 (mi serve per il grafico)
 theta=np.linspace(eps,math.pi-eps, 101)
 phi=np.linspace(0,2*math.pi,101)
@@ -118,6 +124,7 @@ def sss(m):
         u=-np.sin(TETA)*np.cos(PHI)*de_psi(l,h*RRR)/(h**2)
         v=-np.sin(TETA)*np.sin(PHI)*de_psi(l,h*RRR)/(h**2)
         w=-np.cos(TETA)*de_psi(l,h*RRR)/(h**2)
+    
         
     else:
         bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
@@ -128,9 +135,9 @@ def sss(m):
         W= pow(RRR,l)*Y_griglia #armoniche solide
         P=brapp*W
         
-        dr=r[1]-r[0]
-        dtheta = theta[1]-theta[0]
-        dphi = phi[1]-phi[0]
+        dr=(r[1]-r[0])
+        dtheta = (theta[1]-theta[0])
+        dphi = (phi[1]-phi[0])
         dY_r = np.gradient(Y_griglia, dr, axis=0)
         dY_phi = np.gradient(Y_griglia, dphi, axis=1)
         dY_theta = np.gradient(Y_griglia, dtheta, axis=2)
@@ -146,25 +153,21 @@ def sss(m):
         v=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
         w=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
         
-    uu=np.real(u)
-    vv=np.real(v)
-    ww=np.real(w)
-
 
     inte_r=integrate.simpson(RRR*RRR*np.sin(TETA)*(abs(u)**2 + abs(v)**2 + abs(w)**2),r,axis=0)
     inte_te=integrate.simpson(inte_r,theta,axis=1)
     inte_fi=integrate.simpson(inte_te,phi)
     
-    A=np.sqrt(inte_fi)
-    
-    return (uu/A , vv/A, ww/A)
+    A=np.sqrt(1/(rho*inte_fi))
+    #A=np.sqrt(hbar/(freq*2*rho*inte_fi))
+    return np.array([u*A,v*A, w*A])
 
 #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
-#è una tupla a 3 elementi, ognuno è un array 3D
+#è un array  a 3 elementi, ognuno è un array 3D
 
 if args.spostamento == True or args.animazione== True:
     m=int(input('inserisci la terza componente del modo angolare'))
-    s_s=sss(m)
+    s_s=np.real(sss(m))
     u_xz, v_xz, w_xz = s_s[0][:, 0,:], s_s[1][:, 0,:],s_s[2][:, 0,:]
     um_xz, vm_xz, wm_xz = s_s[0][:, 50,:], s_s[1][:,50,:],s_s[2][:, 50,:]
     RR,RRm=RRR[:,0,:],RRR[:,50,:]
@@ -178,22 +181,26 @@ if args.spostamento == True or args.animazione== True:
     norm=np.sqrt(ur_xz**2 + wr_xz**2)
     
     fig, ax = plt.subplots()
-    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="tab20",pivot="tail")
-    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="tab20", pivot="tail")
     ax.scatter(XXr, ZZr, color='blueviolet', s=2,alpha=0.7)
     ax.scatter(-XXr, ZZr, color='blueviolet', s=2, alpha=0.7)
-    ax.set_xlim([-R, R])
-    ax.set_ylim([-R, R])
+    #ax.set_xlim([-R, R])
+    #ax.set_ylim([-R, R])
     ax.set_aspect('equal', 'box')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Z')
     
 if args.spostamento== True:
+    Q=ax.quiver(XXr,ZZr,np.cos(freq)*ur_xz,np.cos(freq)*wr_xz, norm, cmap="tab20",pivot="tail")
+    Qm=ax.quiver(-XXr,ZZr,np.cos(freq)*urm_xz,np.cos(freq)*wrm_xz, norm, cmap="tab20", pivot="tail")
     plt.show()
     
 if args.animazione==True:
+    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="tab20",pivot="tail")
+    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="tab20", pivot="tail")
     def func(frame):
         dt = 0.1 / freq
         t = frame * dt
-        #ggestisco questo parametro per avere un'oscillazione più lenta  (x avere visione qualitativa pulita) (dato che la freq è molto elecata
+        #ggestisco questo parametro nell'animaz. per avere un'oscillazione più lenta  (x avere visione qualitativa pulita) (dato che la freq è molto elecata
         c=np.cos(freq*t)
         Q.set_UVC(c*ur_xz, c*wr_xz)
         Qm.set_UVC(c*urm_xz, c*wrm_xz)
@@ -206,9 +213,10 @@ if args.animazione==True:
     
 if args.intensità == True:
     m=0
+    #senza la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
     Cps=np.empty(0)
     qqs=np.linspace(0,5*10**7,100)
-    s_s=sss(m)
+    s_s=sss(m)*np.cos(freq)
     def Cp(q):
         
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
@@ -216,7 +224,7 @@ if args.intensità == True:
         I_te=integrate.simpson(I_r,theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
         I_fi=integrate.simpson(I_te,phi,axis=0)
         
-        return pow(abs(I_fi),2)
+        return pow(q*abs(I_fi),2)
         """
         U_l0 = integrate.simpson(integrate.simpson(s_s[2]*np.conj(Y(m,l,PHI,TETA))*np.sin(TETA),theta, axis=2),phi, axis=1)
         integranda=(r**2)*Jv(l,q*r)*U_l0 #lasciando l'esponenziale complesso avrei avuto moltissime oscillazioni--> difficile da calcolare
@@ -226,14 +234,14 @@ if args.intensità == True:
     for i in qqs:
         Cps=np.append(Cps,Cp(i))
     In=Cps/(freq**2)
-    plt.plot(qqs*R,In*1e40, color="navy")
+    plt.plot(qqs*R,In, color="navy")
     plt.show()
 
-    #------------< buono per i primi 4 l,oltre l=5 compreso schizza. Non capisco se per l=1 va bene
+    #------------< buono per i primi 4 l, l=5 l=7  schizza, prima frequenza è troppo bassa--> perchè??? qualcosa nell'eq delle frequenze forse  /// l=1 molto basso ok, non è zero per imprecisioni computazionali
+#forse intensità un po' sballate 
 
 
 
-#prof ha detto di togliere la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
 
 
 
