@@ -67,18 +67,22 @@ def f(hR):
     #elif l==1:
         #return kR*psi(l,kR)+2*de_psi(l,kR)
     else:
-        
+        """
         al=((k**2)*(R**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*(h**2)) #okay
         bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
         cl=psi(l,kR)*(kR)**2 + (2*l - 2)*psi(l-1, kR)
         dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
-        """
+        
         ho riscritto k e h e le ho  lasciate  perchè avevo già scritto le a b c d  con questio valori isolati e non ho voglia di riscriverle
         """
+        al=(((hR/rap)**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*((hR/R)**2)) #okay
+        bl=-( (1/rap)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
+        cl=psi(l,hR/rap)*(hR/rap)**2 + (2*l - 2)*psi(l-1, hR/rap)
+        dl=((hR/(R*rap))**2)*l*(psi(l,hR/rap) + de_psi(l, hR/rap)*2*(l+2)/(hR/rap))/(l+1)
         
         return al*dl - bl*cl
     
-hrs = np.linspace(1e-6,30, 5000)   
+hrs = np.linspace(1e-8,20, 50000)   
 fvals = np.array([f(w) for w in hrs])
 
 """
@@ -99,7 +103,7 @@ for i in range(1, len(fvals)):
 
 omegas_s=np.sort(hR_roots)*vl/R
 print(omegas_s)
-
+#print(np.sort(hR_roots))
 
 n=int(input('inserisci il modo radiale'))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
 freq=omegas_s[n]
@@ -175,7 +179,7 @@ if args.spostamento == True or args.animazione== True:
     XX=RR*np.sin(TT)
     ZZ=RR*np.cos(TT)
     
-    step=7
+    step=10
     ur_xz,wr_xz, urm_xz,wrm_xz=u_xz[::step,::step],w_xz[::step,::step], um_xz[::step,::step],wm_xz[::step,::step]
     XXr,ZZr= XX[::step,::step], ZZ[::step,::step]
     norm=np.sqrt(ur_xz**2 + wr_xz**2)
@@ -218,19 +222,25 @@ if args.intensità == True:
     qqs=np.linspace(0,5*10**7,100)
     s_s=sss(m)*np.cos(freq)
     def Cp(q):
-        
+
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
         I_r=integrate.simpson(igr,r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
         I_te=integrate.simpson(I_r,theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
-        I_fi=integrate.simpson(I_te,phi,axis=0)
+        #I_fi=integrate.simpson(I_te,phi,axis=0)
+        I_fi = I_te[0] * 2 * math.pi
+        # Prendo il primo valore tanto sono tutti uguali
         
         return pow(q*abs(I_fi),2)
         """
-        U_l0 = integrate.simpson(integrate.simpson(s_s[2]*np.conj(Y(m,l,PHI,TETA))*np.sin(TETA),theta, axis=2),phi, axis=1)
-        integranda=(r**2)*Jv(l,q*r)*U_l0 #lasciando l'esponenziale complesso avrei avuto moltissime oscillazioni--> difficile da calcolare
-        ingr= integrate.simpson(integranda, r)
-        return 4*math.pi*(2*l +1)*abs(ingr*q)**2
+        integranda_g=s_s[2]*np.conj(Y(m,l,PHI,TETA))*np.sin(TETA)
+        inte1=integrate.simpson(integranda_g,theta, axis=2)
+        g_l0 = integrate.simpson(inte1, phi, axis=1)
+        integranda=(r**2)*Jv(l,q*r)*g_l0 #lasciando l'esponenziale complesso avrei avuto moltissime oscillazioni--> difficile da calcolare
+        ingr= integrate.simpson(integranda, r, axis=0)
+        return 4*math.pi*q*q*(2*l +1)*(abs(ingr))**2
         """
+        
+        
     for i in qqs:
         Cps=np.append(Cps,Cp(i))
     In=Cps/(freq**2)
