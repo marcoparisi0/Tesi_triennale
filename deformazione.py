@@ -82,7 +82,7 @@ def f(hR):
         
         return al*dl - bl*cl
     
-hrs = np.linspace(1e-8,20, 50000)   
+hrs = np.linspace(1e-7,20, 50000)   
 fvals = np.array([f(w) for w in hrs])
 
 """
@@ -102,7 +102,7 @@ for i in range(1, len(fvals)):
         
 
 omegas_s=np.sort(hR_roots)*vl/R
-print(omegas_s)
+#print(omegas_s)
 #print(np.sort(hR_roots))
 
 n=int(input('inserisci il modo radiale'))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
@@ -138,14 +138,19 @@ def sss(m):
         Y_griglia = Y(m, l, PHI, TETA)
         W= pow(RRR,l)*Y_griglia #armoniche solide
         P=brapp*W
-        
+        """
+         # qui con np.gradient che usa la differenza centrale
         dr=(r[1]-r[0])
         dtheta = (theta[1]-theta[0])
         dphi = (phi[1]-phi[0])
         dY_r = np.gradient(Y_griglia, dr, axis=0)
         dY_phi = np.gradient(Y_griglia, dphi, axis=1)
         dY_theta = np.gradient(Y_griglia, dtheta, axis=2)
-        #usa la differenza centrale
+       
+        """
+        #qui con la definizione analitica delle derivate
+        dY_phi=1j*m*Y_griglia
+        dY_theta= (m*Y_griglia/np.tan(TETA))+ (np.sqrt((l+m+1)*(l-m))*np.exp(-1j*PHI)*Y(m+1,l,PHI,TETA))
         
         dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
         dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
@@ -185,8 +190,8 @@ if args.spostamento == True or args.animazione== True:
     norm=np.sqrt(ur_xz**2 + wr_xz**2)
     
     fig, ax = plt.subplots()
-    ax.scatter(XXr, ZZr, color='blueviolet', s=2,alpha=0.7)
-    ax.scatter(-XXr, ZZr, color='blueviolet', s=2, alpha=0.7)
+    ax.scatter(XXr, ZZr, color='red', s=2)
+    ax.scatter(-XXr, ZZr, color='red', s=2)
     #ax.set_xlim([-R, R])
     #ax.set_ylim([-R, R])
     ax.set_aspect('equal', 'box')
@@ -194,13 +199,16 @@ if args.spostamento == True or args.animazione== True:
     ax.set_ylabel('Z')
     
 if args.spostamento== True:
-    Q=ax.quiver(XXr,ZZr,np.cos(freq)*ur_xz,np.cos(freq)*wr_xz, norm, cmap="tab20",pivot="tail")
-    Qm=ax.quiver(-XXr,ZZr,np.cos(freq)*urm_xz,np.cos(freq)*wrm_xz, norm, cmap="tab20", pivot="tail")
+    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="turbo",pivot="tail") #NON MOLTIPLICO PER IL COS(FREQ) CHE AVREI DAVANTI PERCHÈ COSI MOSTRO LO SPOSTAMENTO MAX
+    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="turbo", pivot="tail")
+    cbar = fig.colorbar(Q, ax=ax)
+    cbar.set_label('Norma del campo di spostamento')
+    ax.set_title(f"Vettore spostamento modo sferoidale (n,l,m)=({n+1},{l},{m})") 
     plt.show()
     
 if args.animazione==True:
-    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="tab20",pivot="tail")
-    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="tab20", pivot="tail")
+    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz,color="navy",pivot="tail") #NON MOSTRO I COLORI PERCHÈ NON HA SENSO DATO CHE Ò' "INTENSITÀ" VARIA COL COSENO
+    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz,color="navy", pivot="tail")
     def func(frame):
         dt = 0.1 / freq
         t = frame * dt
@@ -219,10 +227,11 @@ if args.intensità == True:
     m=0
     #senza la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
     Cps=np.empty(0)
-    qqs=np.linspace(0,5*10**7,100)
+    qqs=np.linspace(0,5*10**7,200)
     s_s=sss(m)*np.cos(freq)
     def Cp(q):
-
+        """
+        #versione "semplice"
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
         I_r=integrate.simpson(igr,r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
         I_te=integrate.simpson(I_r,theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
@@ -232,13 +241,14 @@ if args.intensità == True:
         
         return pow(q*abs(I_fi),2)
         """
+        #versione analitica
         integranda_g=s_s[2]*np.conj(Y(m,l,PHI,TETA))*np.sin(TETA)
         inte1=integrate.simpson(integranda_g,theta, axis=2)
         g_l0 = integrate.simpson(inte1, phi, axis=1)
         integranda=(r**2)*Jv(l,q*r)*g_l0 #lasciando l'esponenziale complesso avrei avuto moltissime oscillazioni--> difficile da calcolare
         ingr= integrate.simpson(integranda, r, axis=0)
         return 4*math.pi*q*q*(2*l +1)*(abs(ingr))**2
-        """
+        
         
         
     for i in qqs:
