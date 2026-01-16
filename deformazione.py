@@ -29,14 +29,16 @@ def parse_arguments():
 args = parse_arguments()
 
 
-
+###------------------------------------------------------------------PARAMETRI------------------------------------------------------------------------------------------
 R= 5*(10**(-7)) #m  raggio sfera
-rho= 2.5*pow(10,3) #kg/m3
-lam= 15*pow(10,9) #Pa
-mu= 3.1*pow(10,10) #Pa
-vl=np.sqrt((lam+ 2*mu)/rho)
-vt=np.sqrt(mu/rho)
-rap= vt/vl
+#rho= 2.2*pow(10,3) #kg/m3
+#lam= 16.07*pow(10,9) #Pa
+#mu= 31.2*pow(10,9) #Pa
+vl= 4226 #np.sqrt((lam+ 2*mu)/rho)
+vt=2530 #np.sqrt(mu/rho)
+rap= vt/vl #Velocità prese dall'articolo in cui mostrano intensità di brillouin sferoidali anche per la silice
+###----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 l=int(input('inserisci il modo angolare '))
 
@@ -48,7 +50,7 @@ def de_psi(l,x):
     return ((-1)**l)*pow(x,-l)*(Jv(l,x,True)-(Jv(l,x)*l/x))
 
 
-#--------------------------------------------------- frequenze modi sferoidali-------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------- CALCOLO FREQUENZE MODI SPH-------------------------------------------------------------------------------------------------
 
 def f(hR):
     """
@@ -102,15 +104,14 @@ for i in range(1, len(fvals)):
         
 
 omegas_s=np.sort(hR_roots)*vl/R
-#print(omegas_s)
+print(omegas_s)
 #print(np.sort(hR_roots))
+###-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-n=int(input('inserisci il modo radiale'))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
-freq=omegas_s[n]
-h=freq/vl
-k=freq/vt
-hR=h*R
-kR=k*R
+
+
+
+###-------------------------------------------------------------------------------------GRIGLIA-----------------------------------------------------------------------------------------------
 
 eps = 1e-12
 r=np.linspace(eps,R,101)  #101 perchè in questo modo ho che il punto medio  è 50 (mi serve per il grafico)
@@ -121,6 +122,21 @@ RRR , PHI, TETA = np.meshgrid(r,phi, theta, indexing='ij') # !!! LE TRE DIMENSIO
 questo perchè mi servono 3 matrici 3D di ogni coordinata, meshgrid costruisce la griglia cartesiana del dominio in coordinate sferiche, cioè tipo RRR[i,j,k] (e anche gli altri) è un preciso valore di r[i] in quel punto dello spazio
 RRR, TETA, PHI sono tutti i punti del reticolo sferico
 """
+###----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+###---------------------------------------------------------------------------------------------SPOSTAMENTO------------------------------------------------------------------------------------------------
+n=int(input('inserisci il modo radiale'))-1       #L’indice n è il modo radiale; si ottiene dall’ordine delle radici dell’equazione.
+freq=omegas_s[n]
+h=freq/vl
+k=freq/vt
+hR=h*R
+kR=k*R
+
+
 
 def sss(m):
     
@@ -128,7 +144,6 @@ def sss(m):
         u=-np.sin(TETA)*np.cos(PHI)*de_psi(l,h*RRR)/(h**2)
         v=-np.sin(TETA)*np.sin(PHI)*de_psi(l,h*RRR)/(h**2)
         w=-np.cos(TETA)*de_psi(l,h*RRR)/(h**2)
-    
         
     else:
         bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
@@ -140,17 +155,17 @@ def sss(m):
         P=brapp*W
         """
          # qui con np.gradient che usa la differenza centrale
-        dr=(r[1]-r[0])
+      
         dtheta = (theta[1]-theta[0])
         dphi = (phi[1]-phi[0])
-        dY_r = np.gradient(Y_griglia, dr, axis=0)
+        
         dY_phi = np.gradient(Y_griglia, dphi, axis=1)
         dY_theta = np.gradient(Y_griglia, dtheta, axis=2)
        
         """
         #qui con la definizione analitica delle derivate
         dY_phi=1j*m*Y_griglia
-        dY_theta= (m*Y_griglia/np.tan(TETA))+ (np.sqrt((l+m+1)*(l-m))*np.exp(-1j*PHI)*Y(m+1,l,PHI,TETA))
+        dY_theta= (m*Y_griglia/np.tan(TETA))+ (np.sqrt(l*(l+1)- m*(m+1))*np.exp(-1j*PHI)*Y(m+1,l,PHI,TETA)) #presa dal libro quantum theory...
         
         dxW=pow(RRR,l-1)*(np.sin(TETA)*np.cos(PHI)*l*Y_griglia + np.cos(TETA)*np.cos(PHI)*dY_theta - np.sin(PHI)*dY_phi/np.sin(TETA))
         dyW=pow(RRR,l-1)*(np.sin(TETA)*np.sin(PHI)*l*Y_griglia + np.cos(TETA)*np.sin(PHI)*dY_theta + np.cos(PHI)*dY_phi/np.sin(TETA))
@@ -162,21 +177,19 @@ def sss(m):
         v=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dyW)/(h**2) + de_psi(l,h*RRR)*(RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dyW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dyW - W*np.sin(TETA)*np.sin(PHI)*(2*l + 1)*RRR)/(l+1))
         w=(-(psi(l,h*RRR)+h*RRR*de_psi(l,h*RRR)/(2*l + 1))*(dzW)/(h**2) + de_psi(l,h*RRR)*(RRR*dzW - W*np.cos(TETA)*(2*l +1))/(h*(2*l +1)) + psi(l-1, k*RRR)*brapp*dzW - l*brapp*psi(l+1,k*RRR)*k*k*(RRR*RRR*dzW - W*np.cos(TETA)*(2*l + 1)*RRR)/(l+1))
         
+    return np.array([u,v, w]) #qui non normalizzata (per il grafico)--> la normalizzazione (essendo all'energia) la aggiungo dopo quando calcolo l'intensità.
 
-    inte_r=integrate.simpson(RRR*RRR*np.sin(TETA)*(abs(u)**2 + abs(v)**2 + abs(w)**2),r,axis=0)
-    inte_te=integrate.simpson(inte_r,theta,axis=1)
-    inte_fi=integrate.simpson(inte_te,phi)
-    
-    A=np.sqrt(1/(rho*inte_fi))
-    #A=np.sqrt(hbar/(freq*2*rho*inte_fi))
-    return np.array([u*A,v*A, w*A])
+    #vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
+    #è un array  a 3 elementi, ognuno è un array 3D
+###------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#vari vettori spostamento per vari valori di r teta  phi,relativi ad un modo specifico --->sostanzialmente ho calcolato il campo di spostamento cartesiano su una griglia sferica
-#è un array  a 3 elementi, ognuno è un array 3D
+
+
+
 
 if args.spostamento == True or args.animazione== True:
     m=int(input('inserisci la terza componente del modo angolare'))
-    s_s=np.real(sss(m))
+    s_s=np.real(sss(m)) #non moltiplico per il coseno, prendo il massimo (quindi prodotto per 1)
     u_xz, v_xz, w_xz = s_s[0][:, 0,:], s_s[1][:, 0,:],s_s[2][:, 0,:]
     um_xz, vm_xz, wm_xz = s_s[0][:, 50,:], s_s[1][:,50,:],s_s[2][:, 50,:]
     RR,RRm=RRR[:,0,:],RRR[:,50,:]
@@ -202,8 +215,8 @@ if args.spostamento== True:
     Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="turbo",pivot="tail") #NON MOLTIPLICO PER IL COS(FREQ) CHE AVREI DAVANTI PERCHÈ COSI MOSTRO LO SPOSTAMENTO MAX
     Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="turbo", pivot="tail")
     cbar = fig.colorbar(Q, ax=ax)
-    cbar.set_label('Norma del campo di spostamento')
-    ax.set_title(f"Vettore spostamento modo sferoidale (n,l,m)=({n+1},{l},{m})") 
+    cbar.set_label('Norma del vettore di spostamento [m]')
+    ax.set_title(f"Campo di spostamento corrispondente al modo sferoidale (n,l,m)=({n+1},{l},{m})") 
     plt.show()
     
 if args.animazione==True:
@@ -227,10 +240,18 @@ if args.intensità == True:
     m=0
     #senza la somma sugli m, avendo la direzione privilegiata devo usare m=0 (simmetria cilindrica)
     Cps=np.empty(0)
-    qqs=np.linspace(0,5*10**7,200)
-    s_s=sss(m)*np.cos(freq)
+    qqs=np.linspace(0,5*10**7,100)
+    
+    s=sss(m)*np.cos(freq) #tempo unitario
+    
+    inte_r=integrate.simpson(RRR*RRR*np.sin(TETA)*(abs(s[0])**2 + abs(s[1])**2 + abs(s[2])**2),r,axis=0)
+    inte_te=integrate.simpson(inte_r,theta,axis=1)
+    inte_fi=integrate.simpson(inte_te,phi)
+    A=np.sqrt(1/(rho*inte_fi))
+    s_s=s*A
+    
     def Cp(q):
-        """
+        
         #versione "semplice"
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
         I_r=integrate.simpson(igr,r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
@@ -241,14 +262,14 @@ if args.intensità == True:
         
         return pow(q*abs(I_fi),2)
         """
-        #versione analitica
+        #versione analitica (?)
         integranda_g=s_s[2]*np.conj(Y(m,l,PHI,TETA))*np.sin(TETA)
         inte1=integrate.simpson(integranda_g,theta, axis=2)
         g_l0 = integrate.simpson(inte1, phi, axis=1)
         integranda=(r**2)*Jv(l,q*r)*g_l0 #lasciando l'esponenziale complesso avrei avuto moltissime oscillazioni--> difficile da calcolare
         ingr= integrate.simpson(integranda, r, axis=0)
         return 4*math.pi*q*q*(2*l +1)*(abs(ingr))**2
-        
+        """
         
         
     for i in qqs:
@@ -257,8 +278,6 @@ if args.intensità == True:
     plt.plot(qqs*R,In, color="navy")
     plt.show()
 
-    #------------< buono per i primi 4 l, l=5 l=7  schizza, prima frequenza è troppo bassa--> perchè??? qualcosa nell'eq delle frequenze forse  /// l=1 molto basso ok, non è zero per imprecisioni computazionali
-#forse intensità un po' sballate 
 
 
 
@@ -278,7 +297,7 @@ if args.intensità == True:
 
 
 
-#--------------------------------------------------------frequenze modi torsionali------------------------------------------------------------------------
+#------------------------------------------------------------------frequenze modi torsionali------------------------------------------------------------------------
 """
 if args.torsionale == True:
     
