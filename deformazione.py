@@ -83,8 +83,13 @@ def f(hR):
         dl=((hR/(R*rap))**2)*l*(psi(l,hR/rap) + de_psi(l, hR/rap)*2*(l+2)/(hR/rap))/(l+1)
         
         return al*dl - bl*cl
-    
-hrs = np.linspace(1e-7,20, 50000)   
+
+if l==1:
+    hr0=1e-7
+else:                                    
+    hr0=1e-3
+  #da giustificare nella tesi, il motivo è che per l=1 devo beccare la soluzione fisica della prima radice nulla. Ma se la becco per altri l è oslo un errore computazionale. quindi mi basta un limite inferiore meno "pericoloso"  ---GRAFICAMENTE (plottando l'eq delle frequenza) VEDO CHE l=1 HA UNA SOLUZIONE IN 0, MA l=4 o l=5 NO 
+hrs = np.linspace(hr0,20, 50000)   
 fvals = np.array([f(w) for w in hrs])
 
 """
@@ -104,7 +109,7 @@ for i in range(1, len(fvals)):
         
 
 omegas_s=np.sort(hR_roots)*vl/R
-print(omegas_s)
+#print(omegas_s)
 #print(np.sort(hR_roots))
 ###-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -212,12 +217,19 @@ if args.spostamento == True or args.animazione== True:
     ax.set_ylabel('Z')
     
 if args.spostamento== True:
-    Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="turbo",pivot="tail") #NON MOLTIPLICO PER IL COS(FREQ) CHE AVREI DAVANTI PERCHÈ COSI MOSTRO LO SPOSTAMENTO MAX
-    Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="turbo", pivot="tail")
-    cbar = fig.colorbar(Q, ax=ax)
-    cbar.set_label('Norma del vettore di spostamento [m]')
-    ax.set_title(f"Campo di spostamento corrispondente al modo sferoidale (n,l,m)=({n+1},{l},{m})") 
-    plt.show()
+    if l==1 and n==0 :
+        Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz,color= "navy",pivot="tail") #non metto la colorbar perchè farebbe uno zoom estremo su variazioni insignificanti. la colorbar mostrerebbe solo rumore numerico
+        Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz,color= "navy", pivot="tail")
+        ax.set_title(f"Campo di spostamento corrispondente al modo sferoidale (n,l,m)=({n+1},{l},{m})") 
+        plt.show()
+    else:
+        
+        Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz, norm, cmap="turbo",pivot="tail") #NON MOLTIPLICO PER IL COS(FREQ) CHE AVREI DAVANTI PERCHÈ COSI MOSTRO LO SPOSTAMENTO MAX
+        Qm=ax.quiver(-XXr,ZZr,urm_xz,wrm_xz, norm, cmap="turbo", pivot="tail")
+        cbar = fig.colorbar(Q, ax=ax)
+        cbar.set_label('Norma del vettore di spostamento [m]')
+        ax.set_title(f"Campo di spostamento corrispondente al modo sferoidale (n,l,m)=({n+1},{l},{m})") 
+        plt.show()
     
 if args.animazione==True:
     Q=ax.quiver(XXr,ZZr,ur_xz,wr_xz,color="navy",pivot="tail") #NON MOSTRO I COLORI PERCHÈ NON HA SENSO DATO CHE Ò' "INTENSITÀ" VARIA COL COSENO
