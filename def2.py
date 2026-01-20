@@ -17,7 +17,7 @@ rho= 1850
 vl=4226
 vt=2530
 rap= vt/vl
-n_r=1.44
+n_r=1.46
 
 
 eps = 1e-12
@@ -127,7 +127,7 @@ for l in lll:
     hR=h*R
     kR=k*R
     
-    s=sss(m)*np.cos(freq)
+    s=sss(m)/2 #np.cos(freq*t) modulo quadro mediato nel tempo mi da 1/2
     inte_r=integrate.simpson(RRR*RRR*np.sin(TETA)*(abs(s[0])**2 + abs(s[1])**2 + abs(s[2])**2),r,axis=0)
     inte_te=integrate.simpson(inte_r,theta,axis=1)
     inte_fi=integrate.simpson(inte_te,phi)
