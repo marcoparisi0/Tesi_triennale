@@ -37,6 +37,7 @@ rho=1850 #kg/m3
 vl= 4226 #np.sqrt((lam+ 2*mu)/rho)
 vt=2530 #np.sqrt(mu/rho)
 rap= vt/vl #Velocità prese dall'articolo in cui mostrano intensità di brillouin sferoidali anche per la silice
+#!!! RAP è opposto a quello solito negli articoli
 ###----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -77,7 +78,6 @@ def f(hR):
         
         #ho riscritto k e h tanto è tutto in funzione di hR e rap
         """
-        #SBAGLIATA, è con il rap al contrario, QUINDI DA CAMBIARE, MA IN TEORIA NON DOVREI USARLA
         al=(((hR/rap)**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*((hR/R)**2)) #okay
         bl=-( (1/rap)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
         cl=psi(l,hR/rap)*(hR/rap)**2 + (2*l - 2)*psi(l-1, hR/rap)
