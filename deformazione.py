@@ -31,7 +31,7 @@ args = parse_arguments()
 
 ###------------------------------------------------------------------PARAMETRI------------------------------------------------------------------------------------------
 R= 5*(10**(-7)) #m  raggio sfera
-#rho= 2.2*pow(10,3) #kg/m3
+rho=1850 #kg/m3
 #lam= 16.07*pow(10,9) #Pa
 #mu= 31.2*pow(10,9) #Pa
 vl= 4226 #np.sqrt((lam+ 2*mu)/rho)
@@ -69,19 +69,20 @@ def f(hR):
     #elif l==1:
         #return kR*psi(l,kR)+2*de_psi(l,kR)
     else:
-        """
+        
         al=((k**2)*(R**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*(h**2)) #okay
         bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
         cl=psi(l,kR)*(kR)**2 + (2*l - 2)*psi(l-1, kR)
         dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
         
-        ho riscritto k e h e le ho  lasciate  perchè avevo già scritto le a b c d  con questio valori isolati e non ho voglia di riscriverle
+        #ho riscritto k e h tanto è tutto in funzione di hR e rap
         """
+        #SBAGLIATA, è con il rap al contrario, QUINDI DA CAMBIARE, MA IN TEORIA NON DOVREI USARLA
         al=(((hR/rap)**2)*psi(l,hR) + 2*(l-1)*psi(l-1, hR))/((2*l +1)*((hR/R)**2)) #okay
         bl=-( (1/rap)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
         cl=psi(l,hR/rap)*(hR/rap)**2 + (2*l - 2)*psi(l-1, hR/rap)
         dl=((hR/(R*rap))**2)*l*(psi(l,hR/rap) + de_psi(l, hR/rap)*2*(l+2)/(hR/rap))/(l+1)
-        
+        """
         return al*dl - bl*cl
 
 if l==1:
@@ -109,8 +110,9 @@ for i in range(1, len(fvals)):
         
 
 omegas_s=np.sort(hR_roots)*vl/R
-#print(omegas_s)
-#print(np.sort(hR_roots))
+print(f"le radici adimensionali sono:\n {np.sort(hR_roots)}")
+print(f"le frequenze sono:\n{omegas_s/(2*math.pi)}")
+
 ###-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
