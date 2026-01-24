@@ -211,7 +211,7 @@ for l in lll:
         In_BS=In(qBS)
         spectrum = In_BS*np.exp(-(freqzzz-(freq/(2*math.pi)))**2/(2*sigma**2))  #Stokes
         tuot=tuot +spectrum
-        plt.plot(-freqzzz,spectrum*pow(10,34)/2, label=f"modo ({n+1},{l})")
+        plt.plot(freqzzz,spectrum*pow(10,34)/2, label=f"modo ({n+1},{l})")
 
 plt.plot(x, I_sott, color="red", label="exp")
 
