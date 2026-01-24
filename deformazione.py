@@ -155,7 +155,7 @@ def sss(m):
     else:
         bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
         dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
-        brapp=bl/dl
+        brapp=-bl/dl
         
         Y_griglia = Y(m, l, PHI, TETA)
         W= pow(RRR,l)*Y_griglia #armoniche solide

@@ -17,7 +17,7 @@ rho= 1850
 vl=4226
 vt=2530
 rap= vt/vl
-n_r=1.46
+n_r=1.41
 
 
 eps = 1e-12
@@ -70,7 +70,7 @@ def sss(m):
     else:
         bl=-( (k/h)**2 * psi(l,hR)  + 2*(l+2)*de_psi(l,hR)/(hR) ) /(2*l+1)
         dl=(k**2)*l*(psi(l,kR) + de_psi(l, kR)*2*(l+2)/(kR))/(l+1)
-        brapp=bl/dl
+        brapp=-bl/dl
         
         Y_griglia = Y(m, l, PHI, TETA)
         W= pow(RRR,l)*Y_griglia #armoniche solide
@@ -146,8 +146,8 @@ for l in lll:
         igr=np.exp(-1j*(q*RRR*np.cos(TETA)))*RRR*RRR*s_s[2]*np.sin(TETA)
         I_r=integrate.simpson(igr,r,axis=0)   #ricorda che per l'indexing ho che 0 è r, 1 phi, 2 teta
         I_te=integrate.simpson(I_r,theta,axis=1)           #integrando riduco le variabili quindi ora phi è 0 e teta è 1
-        #I_fi=integrate.simpson(I_te,phi,axis=0)
-        I_fi = I_te[0] * 2 * math.pi
+        I_fi=integrate.simpson(I_te,phi,axis=0)
+        #I_fi = I_te[0] * 2 * math.pi
         # Prendo il primo valore tanto sono tutti uguali
         
         return q*q*(abs(I_fi))**2
