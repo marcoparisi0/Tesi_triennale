@@ -19,11 +19,11 @@ data_sub=np.genfromtxt("substrato_Potenza=100mW_pin=300_pout=700_1000scans.DAT",
 
 c=299792458
 d=16*(pow(10,-3))
-FSR=c/(2*d)
-#FSR=16.9603*1e9
+#FSR=c/(2*d)
+FSR=16.9603*1e9
 #print(FSR)
-x=np.linspace(-FSR,FSR,len(data_I))
-#x=np.linspace(-FSR/2,FSR/2,len(data_I))
+#x=np.linspace(-FSR,FSR,len(data_I))
+x=np.linspace(-FSR/2,FSR/2,len(data_I))
 
 
 plt.plot(x,data_I, color="red", label="instensità aggregato sul substrato")
@@ -35,13 +35,13 @@ plt.show()
 
 I_sott=data_I-(data_sub)
 I_sott[I_sott < 0] = 0
-plt.plot(x, I_sott, color="green")
+plt.plot(x,I_sott, color="green")
 plt.show()
 
 
 R= 5*(10**(-7)) #m  raggio sfera
 rho= 1850
-n_r=1.41 #CALCOLATO DALL'ARTICOLO
+
 
 
 ###-----------------------------------------------------------------------PARAMETRI MODIFICABILI--------------------------------------------------------------------------------------------------------
@@ -51,9 +51,9 @@ n_r=1.41 #CALCOLATO DALL'ARTICOLO
 #rap = vt/vl
 
 #con questi fitta quasi bene ma 0,2 non è il più alto
-#vl= 4700
-#rap=0.57
-
+#vl= 5100
+#rap=0.49
+#n_r=1.55
 
 #con questi sembra tutto traslato di 1 GHz
 #vl=4450
@@ -75,9 +75,9 @@ n_r=1.41 #CALCOLATO DALL'ARTICOLO
 
 
 #ECCOLI -->  anti-Stokes
-rap=0.69
-vl=6050
-
+rap=0.68
+vl=5500
+n_r=1.41 #CALCOLATO DALL'ARTICOLO
 ###------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 eps = 1e-12
@@ -143,8 +143,8 @@ def sss(m):
 
 lll=np.array([0,1,2,3])
 tuot=0
-#freqzzz=np.linspace(0,FSR/2,10000)
-freqzzz=np.linspace(0,FSR,10000)
+freqzzz=np.linspace(0,FSR/2,10000)
+#freqzzz=np.linspace(0,FSR,10000)
 for l in lll:
     if l==1:
         hr0=1e-7
@@ -211,7 +211,7 @@ for l in lll:
         In_BS=In(qBS)
         spectrum = In_BS*np.exp(-(freqzzz-(freq/(2*math.pi)))**2/(2*sigma**2))  #Stokes
         tuot=tuot +spectrum
-        plt.plot(freqzzz,spectrum*pow(10,34)/2, label=f"modo ({n+1},{l})")
+        plt.plot(freqzzz,spectrum*pow(10,34)/3, label=f"modo ({n+1},{l})")
 
 plt.plot(x, I_sott, color="red", label="exp")
 
