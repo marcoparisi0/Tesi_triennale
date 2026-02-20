@@ -13,7 +13,8 @@ from scipy.optimize import brentq
 
 
 data_I = np.genfromtxt("aggregato_Potenza=100mW_pin=300_pout=700_2525scans.DAT", skip_header=10, invalid_raise=False)
-data_sub=np.genfromtxt("substrato_Potenza=100mW_pin=300_pout=700_1000scans.DAT", skip_header=10, invalid_raise=False)*1.4 #per "pareggiare" i conteggi
+data_sub=np.genfromtxt("substrato_Potenza=100mW_pin=300_pout=700_1000scans.DAT", skip_header=10, invalid_raise=False)*1.2 #per "pareggiare" i conteggi
+data_s3= np.genfromtxt("spettro_particella#3_antenna_d=16mm_pin=300_pout=450_Potenza=xx.DAT", skip_header=10, invalid_raise=False)
 #print(len(data_I))
 #print(len(data_sub))
 
@@ -24,18 +25,23 @@ FSR=16.9603*1e9
 #print(FSR)
 #x=np.linspace(-FSR,FSR,len(data_I))
 x=np.linspace(-FSR/2,FSR/2,len(data_I))
-
-
-plt.plot(x,data_I, color="red", label="instensità aggregato sul substrato")
-plt.plot(x, data_sub, color='black', label='intensità substrato')
-plt.legend()
-plt.xlabel("freq")
-plt.ylabel("conteggio")
-plt.show()
-
+xxx=np.linspace(-16.7948*1e9/2,16.7948*1e9/2,len(data_s3))
 I_sott=data_I-(data_sub)
 I_sott[I_sott < 0] = 0
-plt.plot(x,I_sott, color="green")
+plt.plot(x,data_I, color="orange", label="Instensità aggregato sul substrato")
+plt.plot(xxx,data_s3,color="purple", label="Intensità singola sfera sul substrato (seconda misura)")
+plt.legend()
+plt.xlabel("frequenza [Hz]")
+plt.ylabel("Conteggio")
+plt.show()
+plt.plot(x,data_I, color="black", label="Instensità aggregato sul substrato")
+plt.plot(x, data_sub, color='navy', label='Intensità substrato')
+plt.legend()
+plt.xlabel("frequenza [Hz]")
+plt.ylabel("Conteggio")
+plt.show()
+
+plt.plot(x, I_sott, color="green")
 plt.show()
 
 
@@ -51,9 +57,9 @@ rho= 1850
 #rap = vt/vl
 
 #con questi fitta quasi bene ma 0,2 non è il più alto
-#vl= 5100
+#vl= 5200
 #rap=0.49
-#n_r=1.55
+#n_r=1.42
 
 #con questi sembra tutto traslato di 1 GHz
 #vl=4450
@@ -75,10 +81,21 @@ rho= 1850
 
 
 #ECCOLI -->  anti-Stokes
-rap=0.68
-vl=5500
-n_r=1.41 #CALCOLATO DALL'ARTICOLO
+#rap=0.68
+#vl=5500
+#n_r=1.41 #CALCOLATO DALL'ARTICOLO
 ###------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#PERFETTI
+#n_r=1.45
+#rap=0.62
+#vl=4100
+
+#PERFETTI SU SFERA SINGOLA
+n_r=1.41
+rap=0.67
+vl=4280
+
 
 eps = 1e-12
 r=np.linspace(eps,R,101)  #101 perchè in questo modo ho che il punto medio  è 50 (mi serve per il grafico)
@@ -205,18 +222,35 @@ for l in lll:
         qBS=4*math.pi*n_r/(532*pow(10,-9))
         #qBS=5/R  #HO GUARDATO DAL GRAFICO  I(qR) la parte in cui (1,3) avesse intensità maggiore, dato che con questi parametri fitta bene tranne le intensità
         sigma = 10**8
-        #q_int=np.linspace(0.92*qBS,qBS, 100)
-        #In_val=np.array([In(j) for j in q_int])
-        #In_BS=integrate.simpson(In_val*q_int,q_int) #qui moltiplica intensità per 1e19
-        In_BS=In(qBS)
+        q_int=np.linspace(0.92*qBS,qBS, 300)
+        In_val=np.array([In(j) for j in q_int])
+        In_BS=integrate.simpson(In_val*q_int,q_int) #qui moltiplica intensità per 1e19
+        #In_BS=In(qBS)
+        
+        if l==0 and n==0:
+            In_BS=In_BS*50
+        """
+        if l==3 and n==0:
+            In_BS=In_BS/10
+        if l==2 and n==0:
+            In_BS=In_BS/8
+        if l==4 and n==0:
+            In_BS=In_BS/10
+        if l==6 and n==0:
+            In_BS=In_BS/16
+        if l==5 and n==0:
+            In_BS=In_BS/2
+        """
         spectrum = In_BS*np.exp(-(freqzzz-(freq/(2*math.pi)))**2/(2*sigma**2))  #Stokes
         tuot=tuot +spectrum
-        plt.plot(freqzzz,spectrum*pow(10,34)/3, label=f"modo ({n+1},{l})")
+        plt.plot(freqzzz,spectrum*pow(10,19)/2, label=f"modo ({n+1},{l})")
 
-plt.plot(x, I_sott, color="black", label="exp")
-
+plt.plot(x, I_sott, color="black", label="exp sottratto")
+#plt.plot(x, data_I, color="brown", label="exp")
 #plt.plot(freqzzz, tuot*1e35, color="green", label="tot")
+plt.xlabel("Frequenza [Hz]")
+plt.ylabel("Intensità [U.A.]")
 plt.legend()
 plt.show()
 
-        
+      

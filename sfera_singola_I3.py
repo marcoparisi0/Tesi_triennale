@@ -12,73 +12,36 @@ from scipy.optimize import brentq
 
 
 
-data_I = np.genfromtxt("aggregato_Potenza=100mW_pin=300_pout=700_2525scans.DAT", skip_header=10, invalid_raise=False)
-data_sub=np.genfromtxt("substrato_Potenza=100mW_pin=300_pout=700_1000scans.DAT", skip_header=10, invalid_raise=False)*1.4 #per "pareggiare" i conteggi
-#print(len(data_I))
-#print(len(data_sub))
+data_I1 = np.genfromtxt("spettro_particella_antenna_d=16mm_pin=300_pout=300_Potenza=xx.DAT", skip_header=10, invalid_raise=False)
+data_I2 = np.genfromtxt("spettro_particella#2_antenna_d=16mm_pin=300_pout=300_Potenza=xx.DAT", skip_header=10, invalid_raise=False)
+data_I3 = np.genfromtxt("spettro_particella#3_antenna_d=16mm_pin=300_pout=450_Potenza=xx.DAT", skip_header=10, invalid_raise=False)
+data_sub1=np.genfromtxt("spettro_substrato_antenna_d=16mm_pin=300_pout=300_Potenza=xx.DAT", skip_header=10, invalid_raise=False)
+data_sub2=np.genfromtxt("spettro_substrato#2_antenna_d=16mm_pin=300_pout=300_Potenza=xx.DAT", skip_header=10, invalid_raise=False)*0.6
 
-c=299792458
-d=16*(pow(10,-3))
-#FSR=c/(2*d)
-FSR=16.9603*1e9
-#print(FSR)
-#x=np.linspace(-FSR,FSR,len(data_I))
-x=np.linspace(-FSR/2,FSR/2,len(data_I))
+print(len(data_I3))
+FSR=16.7948*1e9
+x=np.linspace(-FSR/2,FSR/2,len(data_I1))
 
+I_sott3=data_I3-(data_sub2)
+I_sott3[I_sott3< 0] = 0
 
-plt.plot(x,data_I, color="red", label="instensità aggregato sul substrato")
-plt.plot(x, data_sub, color='black', label='intensità substrato')
+plt.plot(x,data_sub2, color="navy", label="Intensità substrato")
+plt.plot(x, data_I3, color="black", label="Intensità per una singola sfera")
+
 plt.legend()
-plt.xlabel("freq")
-plt.ylabel("conteggio")
-plt.show()
-
-I_sott=data_I-(data_sub)
-I_sott[I_sott < 0] = 0
-plt.plot(x,I_sott, color="green")
+plt.xlabel("frequenza [Hz]")
+plt.ylabel("Conteggio")
 plt.show()
 
 
 R= 5*(10**(-7)) #m  raggio sfera
 rho= 1850
 
+n_r=1.41
+rap=0.67
+vl=4280
 
 
-###-----------------------------------------------------------------------PARAMETRI MODIFICABILI--------------------------------------------------------------------------------------------------------
-#con questi (1,2) mi viene in corripsondenza del picco più alto 
-#vt=4050
-#vl=6430
-#rap = vt/vl
-
-#con questi fitta quasi bene ma 0,2 non è il più alto
-#vl= 5100
-#rap=0.49
-#n_r=1.55
-
-#con questi sembra tutto traslato di 1 GHz
-#vl=4450
-#rap=0.85
-
-#MIGLIORI PER ORA
-#rap=0.61
-#vl=4200
-
-#rap=0.49  #deve essere tra 0.55 e 0.47 perchè è una zona in cui 0,3 ha inensità max , vl lo regolo se voglio aumentare o diminuire la frequenza (ma lo tocco poco)
-#vl=5000
-
-#Ritorno ai primi parametri perchè quasi sicuramente il primo "picco" non è effettivamente un picco
-#rap=0.7
-#vl=6000  #QUASI PERFETTI
-
-#rap=0.68
-#vl=6100
-
-
-#ECCOLI -->  anti-Stokes
-rap=0.68
-vl=5500
-n_r=1.41 #CALCOLATO DALL'ARTICOLO
-###------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 eps = 1e-12
 r=np.linspace(eps,R,101)  #101 perchè in questo modo ho che il punto medio  è 50 (mi serve per il grafico)
@@ -141,10 +104,9 @@ def sss(m):
 
 
 
-lll=np.array([0,1,2,3,4,5,6])
-tuot=0
+lll=np.array([0,1,2,3])
 freqzzz=np.linspace(0,FSR/2,10000)
-#freqzzz=np.linspace(0,FSR,10000)
+
 for l in lll:
     if l==1:
         hr0=1e-7
@@ -203,20 +165,19 @@ for l in lll:
         
         #plot in funzione delle frequenze
         qBS=4*math.pi*n_r/(532*pow(10,-9))
-        #qBS=5/R  #HO GUARDATO DAL GRAFICO  I(qR) la parte in cui (1,3) avesse intensità maggiore, dato che con questi parametri fitta bene tranne le intensità
-        sigma = 10**8
-        #q_int=np.linspace(0.92*qBS,qBS, 100)
-        #In_val=np.array([In(j) for j in q_int])
-        #In_BS=integrate.simpson(In_val*q_int,q_int) #qui moltiplica intensità per 1e19
+        sigma = 9*(10**7)
         In_BS=In(qBS)
-        spectrum = In_BS*np.exp(-(freqzzz-(freq/(2*math.pi)))**2/(2*sigma**2))  #Stokes
-        tuot=tuot +spectrum
-        plt.plot(freqzzz,spectrum*pow(10,34)/3, label=f"modo ({n+1},{l})")
+        spectrum = In_BS*np.exp(-(freqzzz-(freq/(2*math.pi)))**2/(2*sigma**2))
+        if l==2 and n==0:
+            plt.plot(freqzzz,spectrum*pow(10,34)/3, label=f"modo ({n+1},{l})",color="orange")
+        else:
+            plt.plot(freqzzz,spectrum*pow(10,34)/3, label=f"modo ({n+1},{l})")
 
-plt.plot(x, I_sott, color="black", label="exp")
-
-#plt.plot(freqzzz, tuot*1e35, color="green", label="tot")
+#plt.plot(x, I_sott3, color="black", label="exp sottratto")
+plt.plot(x, data_I3, color="black", label="exp")
+plt.plot(x,data_sub2, color="navy",label="Intensità substrato")
+plt.xlabel("Frequenza [Hz]")
+plt.ylabel("Intensità [U.A.]")
 plt.legend()
 plt.show()
 
-        
